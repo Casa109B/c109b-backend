@@ -1,8 +1,7 @@
 {
-  "name": "c109b-backend",
-  "private": true,
   "type": "module",
   "dependencies": {
-    "openai": "^4.58.1"
+    "openai": "^4.5.0"
   }
 }
+
