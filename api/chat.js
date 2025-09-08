@@ -1,46 +1,42 @@
-import { Configuration, OpenAIApi } from "openai";
+// api/chat.js
+import OpenAI from "openai";
+
+// Load API key from environment variables
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const { message } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ error: "Message is required" });
+  }
+
   try {
-    // Only accept POST requests
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method not allowed" });
-    }
-
-    // Parse the request body
-    const { message } = req.body;
-    if (!message) {
-      return res.status(400).json({ error: "No message provided" });
-    }
-
-    // Initialize OpenAI
-    const configuration = new Configuration({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    if (!configuration.apiKey) {
-      return res.status(500).json({ error: "OpenAI API key not set" });
-    }
-
-    const openai = new OpenAIApi(configuration);
-
-    // Send the message to ChatGPT
+    // Call OpenAI ChatCompletion API
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-mini", // You can change to gpt-4-mini if you want
+      model: "gpt-5-mini",
       messages: [
-        { role: "system", content: "You are a helpful assistant for Casa109B website." },
-        { role: "user", content: message },
+        {
+          role: "user",
+          content: message
+        }
       ],
-      temperature: 0.7,
-      max_tokens: 200,
+      max_tokens: 200
     });
 
-    const responseText = completion.choices[0].message.content;
+    const reply = completion.choices[0].message.content;
 
-    res.status(200).json({ response: responseText });
+    res.status(200).json({ reply });
   } catch (error) {
-    console.error("Chat function error:", error);
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    console.error("OpenAI API error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 }
+
 
