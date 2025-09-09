@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
     const completion = await openai.chat.completions.create({
       model: "gpt-5-mini",
-      response_format: { type: "json_object" }, // <-- forces JSON response
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -45,15 +45,18 @@ Detect the user's intent and always return:
       max_completion_tokens: 200,
     });
 
+    const rawResponse = completion.choices[0].message.content;
+    console.log("🔎 RAW GPT RESPONSE:", rawResponse); // <--- ADD THIS
+
     let reply = "Sorry, I didn't understand that";
     let keyword = "fallback";
 
     try {
-      const parsed = JSON.parse(completion.choices[0].message.content);
+      const parsed = JSON.parse(rawResponse);
       reply = parsed.reply || reply;
       keyword = parsed.keyword || keyword;
     } catch (err) {
-      console.error("Error parsing GPT JSON:", err);
+      console.error("❌ JSON parse failed:", err.message);
     }
 
     return res.status(200).json({ reply, keyword });
