@@ -18,11 +18,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    // Call OpenAI ChatCompletion API
+    // Call OpenAI ChatCompletion API with the correct parameter for gpt-5-mini
     const completion = await openai.chat.completions.create({
       model: "gpt-5-mini",
       messages: [{ role: "user", content: message }],
-      max_tokens: 200
+      max_completion_tokens: 200 // <-- fixed parameter
     });
 
     const reply = completion.choices?.[0]?.message?.content || "No response";
