@@ -8,7 +8,7 @@ const openai = new OpenAI({
 
 export default async function handler(req, res) {
   // ----------------- CORS HEADERS -----------------
-  res.setHeader("Access-Control-Allow-Origin", "*"); // allow all origins, or put Framer domain here
+  res.setHeader("Access-Control-Allow-Origin", "*"); // or put Framer domain
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -29,49 +29,48 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    // ----------------- GPT PROMPT -----------------
-    // We give context about Casa109B and instruct GPT to reply in JSON
-    const systemPrompt = `
-You are the website assistant for Casa109B, a creative studio focused on:
-- Website design
-- Brand design
-- 2D animation
-
-When the user writes a message, always respond in JSON like this:
-{
-  "reply": "Your text reply to the user here",
-  "keyword": "projects | about | contact | services | home | fallback"
-}
-
-Do NOT add any other text outside the JSON. 
-Be witty, friendly, and aligned with Casa109B's brand voice.
-`;
-
+    // Call OpenAI GPT-5 API
     const completion = await openai.chat.completions.create({
       model: "gpt-5-mini",
       messages: [
-        { role: "system", content: systemPrompt },
+        {
+          role: "system",
+          content: `
+You are the AI assistant for Casa109B, a creative studio specializing in website design, brand design, and 2D animation.
+Your job:
+1. Answer user questions in a witty, friendly, and brand-aligned tone.
+2. Always detect if the user wants "projects", "about", "contact", "services", "home", or is just greeting ("hello").
+3. When replying, ONLY return a JSON object with two fields: 
+   - "reply": your text response
+   - "keyword": one of the valid keywords ("projects", "about", "contact", "services", "home", "hello", or "fallback")
+Example:
+{"reply":"Sure! I can show you our projects.","keyword":"projects"}
+Do not write anything outside of the JSON format.
+          `,
+        },
         { role: "user", content: message },
       ],
       max_completion_tokens: 200,
     });
 
-    // GPT response
-    const rawContent = completion.choices?.[0]?.message?.content || '{}';
+    // Parse GPT JSON safely
+    let reply = "Sorry, I didn't understand that";
+    let keyword = "fallback";
 
-    // Parse JSON safely
-    let replyData;
     try {
-      replyData = JSON.parse(rawContent);
+      const parsed = JSON.parse(completion.choices[0].message.content);
+      reply = parsed.reply || reply;
+      keyword = parsed.keyword || keyword;
     } catch (err) {
-      // Fallback if GPT sends invalid JSON
-      replyData = { reply: "Sorry, I didn't understand that.", keyword: "fallback" };
+      console.error("Error parsing GPT JSON:", err);
     }
 
-    return res.status(200).json(replyData);
+    return res.status(200).json({ reply, keyword });
   } catch (error) {
     console.error("OpenAI API error:", error);
-    return res.status(500).json({ error: error.message || "Internal server error" });
+    return res
+      .status(500)
+      .json({ error: error.message || "Internal server error" });
   }
 }
 
