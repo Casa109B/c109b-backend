@@ -10,7 +10,10 @@ export default async function handler(req, res) {
   // ----------------- CORS HEADERS -----------------
   res.setHeader("Access-Control-Allow-Origin", "*"); // allow all origins, or put Framer domain here
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "*"); // allow all headers
+
+  // ----------------- DEBUG LOG -----------------
+  console.log("Incoming request:", req.method, req.body);
 
   // Handle preflight OPTIONS request
   if (req.method === "OPTIONS") {
@@ -33,7 +36,7 @@ export default async function handler(req, res) {
     const completion = await openai.chat.completions.create({
       model: "gpt-5-mini",
       messages: [{ role: "user", content: message }],
-      max_completion_tokens: 200, // Corrected for GPT-5
+      max_completion_tokens: 200, // Correct parameter for GPT-5
     });
 
     const reply = completion.choices?.[0]?.message?.content || "No response";
