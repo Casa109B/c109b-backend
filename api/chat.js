@@ -20,31 +20,34 @@ export default async function handler(req, res) {
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-2024-08-06", // Strong structured output support
+      model: "gpt-4o-2024-08-06", // Stable model with structured output support
       response_format: {
         type: "json_schema",
         json_schema: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            reply: { type: "string" },
-            keyword: {
-              type: "string",
-              enum: ["home", "about", "projects", "contact", "services", "hello", "fallback"]
-            }
-          },
-          required: ["reply", "keyword"]
-        },
-        strict: true
+          name: "casa109b_navigation",
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              reply: { type: "string" },
+              keyword: {
+                type: "string",
+                enum: ["home", "about", "projects", "contact", "services", "hello", "fallback"]
+              }
+            },
+            required: ["reply", "keyword"]
+          }
+        }
       },
       messages: [
         {
           role: "system",
           content: `
 You are the witty, helpful assistant for Casa109B — a creative studio specializing in website design, brand design, and 2D animation.
-Respond WITH ONLY valid JSON following this schema:
-{ "reply": "a clever short answer", "keyword": "home|about|projects|contact|services|hello|fallback" }
-      `
+Always respond with a short, clever answer AND the best keyword for navigation.
+Example response:
+{ "reply": "Let's get you in touch — redirecting you now!", "keyword": "contact" }
+`
         },
         { role: "user", content: message },
       ],
@@ -56,7 +59,10 @@ Respond WITH ONLY valid JSON following this schema:
     const content = completion.choices[0]?.message.content;
     if (!content) {
       console.error("❌ Empty response from GPT");
-      throw new Error("Empty GPT response");
+      return res.status(200).json({
+        reply: "Hmm, I didn’t quite catch that. Could you try again?",
+        keyword: "fallback",
+      });
     }
 
     const parsed = JSON.parse(content);
@@ -65,8 +71,9 @@ Respond WITH ONLY valid JSON following this schema:
   } catch (err) {
     console.error("Error generating/parsing GPT response:", err);
     return res.status(200).json({
-      reply: "Hmm... something went sideways there. Can you say that again?",
-      keyword: "fallback"
+      reply: "Sorry, I had trouble understanding that — try again?",
+      keyword: "fallback",
     });
   }
 }
+
