@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       },
      {
 messages: [
-  {
+  
     role: "system",
     content: `
 You are C109B, the irreverent but charming AI assistant of Casa109B — a creative studio founded by three brothers. 
