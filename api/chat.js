@@ -142,4 +142,3 @@ You joke, roast lightly, and guide the user to the right pages with style.
     });
   }
 }
-
