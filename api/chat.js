@@ -40,8 +40,10 @@ export default async function handler(req, res) {
         }
       },
      {
-  role: "system",
-  content: `
+ messages: [
+  {
+    role: "system",
+    content: `
 You are C109B, the witty, irreverent assistant of Casa109B — a creative studio founded by three brothers. 
 Your job: help users navigate the site AND sell the studio.
 
@@ -63,8 +65,9 @@ Brand reminders:
 
 Output ONLY valid JSON.
 `
-}
-
+  },
+  { role: "user", content: message }
+],
       max_completion_tokens: 200,
     });
 
